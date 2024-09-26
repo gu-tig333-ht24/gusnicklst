@@ -53,13 +53,21 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: Colors.grey,
         title: const Text("To-do list"),
       ),
-      body: ListView(
-
-        children: 
-            todos.map((todo) => chores(todo)).toList(),
+      body: ListView(          
+        children: todos.map((todo) => chores(todo)).toList(),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: (){
+          Navigator.push(
+            context, MaterialPageRoute(builder: (context) => const AddTodo()));
+
+        },
+      child: const Icon(Icons.add),
+      )
+
     );
   }
+
   Widget chores(Todo todo){
     return Row(
           // Column is also a layout widget. It takes a list of children and
@@ -95,4 +103,37 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
 
+}
+
+class AddTodo extends StatelessWidget {
+  const AddTodo({super.key});
+  @override
+  Widget build (BuildContext context){
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Add a New Todo"),
+      ),
+
+    body: Padding(
+      padding: const EdgeInsets.all(30.0),
+      child: Column(
+        children: [
+          TextField(
+            decoration: InputDecoration(
+              border: OutlineInputBorder(),
+              hintText: "What are you going to do?"
+            ),
+          ),
+          const SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text("Add Todo"),
+          )
+        ],
+      ),
+    )
+    );
+  }
 }
