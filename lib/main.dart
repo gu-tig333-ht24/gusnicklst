@@ -1,7 +1,40 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+
+class MyState extends ChangeNotifier{
+  List<Todo> todos = [
+    Todo("Write a book"),
+    Todo("Do homework"),
+    Todo("Tidy room"),
+    Todo("Watch TV"),
+    Todo("Nap"),
+    Todo("Shop groceries"),
+    Todo("Have fun"),
+    Todo("Meditate"),
+  ];
+
+  List<Todo> get todolist => todos;
+
+  void addTodo(Todo todo){
+    todos.add(todo);
+    notifyListeners();
+  }
+  void removeTodo(Todo todo){
+    todos.remove(todo);
+    notifyListeners();
+  }
+}
 
 void main() {
-  runApp(const MyApp());
+  MyState state = MyState();
+  runApp(
+    ChangeNotifierProvider(
+    create: (context) => state,
+    child:
+    MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -35,6 +68,7 @@ class Todo {
 class _MyHomePageState extends State<MyHomePage> {
 
   //bool? value = false;
+  /*
   List<Todo> todos = [
     Todo("Write a book"),
     Todo("Do homework"),
@@ -45,9 +79,10 @@ class _MyHomePageState extends State<MyHomePage> {
     Todo("Have fun"),
     Todo("Meditate"),
   ];
+  */
   @override
   Widget build(BuildContext context) {
-
+    var todos = context.watch<MyState>().todos;
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.grey,
@@ -69,6 +104,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget chores(Todo todo){
+    //var todos = context.watch<MyState>().todos;
     return Row(
           // Column is also a layout widget. It takes a list of children and
           // arranges them vertically. By default, it sizes itself to fit its
@@ -77,7 +113,10 @@ class _MyHomePageState extends State<MyHomePage> {
           //crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Checkbox(
-              side: BorderSide(width: 500),
+              side: BorderSide(
+                width: 2,
+                color: Colors.black,
+                ),
               value: todo.isChecked, 
               onChanged: (bool? newValue){
                 setState((){
@@ -87,16 +126,28 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             Expanded(
               child: Text(
-                style: TextStyle(fontSize: 28),
+                style: TextStyle(
+                  fontSize: 28,
+                  decoration: todo.isChecked ? TextDecoration.lineThrough : TextDecoration.none,
+                  ),
                 todo.chore
               ),
             ),
             Padding(
+              
               padding: EdgeInsets.only(right: 20),
-              child: Icon(
-              size: 35, 
-              Icons.close
-            )
+              child: IconButton(
+                 
+                icon: Icon(Icons.close),
+                iconSize: 35,
+                onPressed: (){
+                  context.read<MyState>().removeTodo(todo);
+                },
+                )
+              //child: Icon(
+              //size: 35, 
+              //Icons.close
+            //)
             )
           ],
         );
@@ -105,8 +156,15 @@ class _MyHomePageState extends State<MyHomePage> {
 
 }
 
-class AddTodo extends StatelessWidget {
+class AddTodo extends StatefulWidget {
   const AddTodo({super.key});
+
+  @override
+  State<AddTodo> createState() => _AddTodoState();
+}
+
+class _AddTodoState extends State<AddTodo> {
+  TextEditingController _controller = TextEditingController();
   @override
   Widget build (BuildContext context){
     return Scaffold(
@@ -119,6 +177,7 @@ class AddTodo extends StatelessWidget {
       child: Column(
         children: [
           TextField(
+            controller: _controller,
             decoration: InputDecoration(
               border: OutlineInputBorder(),
               hintText: "What are you going to do?"
@@ -127,6 +186,11 @@ class AddTodo extends StatelessWidget {
           const SizedBox(height: 20),
           ElevatedButton(
             onPressed: () {
+              String inputText = _controller.text;
+              if(inputText.isNotEmpty){
+                Todo newTodo = Todo(inputText);
+                context.read<MyState>().addTodo(newTodo);
+              }
               Navigator.pop(context);
             },
             child: const Text("Add Todo"),
