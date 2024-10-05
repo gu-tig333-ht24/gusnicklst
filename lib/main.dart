@@ -1,33 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import './api.dart' as api;
+import './model.dart';
 
 
 class MyState extends ChangeNotifier{
-  List<Todo> todos = [
-    Todo("Write a book"),
-    Todo("Do homework"),
-    Todo("Tidy room"),
-    Todo("Watch TV"),
-    Todo("Nap"),
-    Todo("Shop groceries"),
-    Todo("Have fun"),
-    Todo("Meditate"),
-  ];
 
-  List<Todo> get todolist => todos;
+List<Todo> _todos = [];
 
-  void addTodo(Todo todo){
-    todos.add(todo);
-    notifyListeners();
-  }
-  void removeTodo(Todo todo){
-    todos.remove(todo);
-    notifyListeners();
-  }
+List<Todo> get todos => _todos;
+
+void fetchTodos() async {
+  var todos = await api.getTodos();
+  _todos = todos;
+  notifyListeners();
+}
+void addTodo(Todo todo) async {
+  await api.addTodo(todo);
+  fetchTodos();
+}
+void deleteTodo(Todo todo) async {
+  await api.deleteTodo(todo);
+  fetchTodos();
+}
 }
 
-void main() {
+void main() async {
   MyState state = MyState();
+  state.fetchTodos();
   runApp(
     ChangeNotifierProvider(
     create: (context) => state,
@@ -40,7 +40,6 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -53,33 +52,13 @@ class MyApp extends StatelessWidget {
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
 
-
   final String title;
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
-class Todo {
-  final String chore;
-  bool isChecked;
-  Todo(this.chore, {this.isChecked = false});
-}
 
 class _MyHomePageState extends State<MyHomePage> {
-
-  //bool? value = false;
-  /*
-  List<Todo> todos = [
-    Todo("Write a book"),
-    Todo("Do homework"),
-    Todo("Tidy room"),
-    Todo("Watch TV"),
-    Todo("Nap"),
-    Todo("Shop groceries"),
-    Todo("Have fun"),
-    Todo("Meditate"),
-  ];
-  */
   @override
   Widget build(BuildContext context) {
     var todos = context.watch<MyState>().todos;
@@ -95,32 +74,25 @@ class _MyHomePageState extends State<MyHomePage> {
         onPressed: (){
           Navigator.push(
             context, MaterialPageRoute(builder: (context) => const AddTodo()));
-
         },
       child: const Icon(Icons.add),
       )
-
     );
   }
 
   Widget chores(Todo todo){
-    //var todos = context.watch<MyState>().todos;
     return Row(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
           mainAxisAlignment: MainAxisAlignment.start,
-          //crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Checkbox(
               side: BorderSide(
                 width: 2,
                 color: Colors.black,
                 ),
-              value: todo.isChecked, 
+              value: todo.done, 
               onChanged: (bool? newValue){
                 setState((){
-                  todo.isChecked = newValue ?? false;
+                  todo.done = newValue ?? false;
                 });
               } 
             ),
@@ -128,32 +100,24 @@ class _MyHomePageState extends State<MyHomePage> {
               child: Text(
                 style: TextStyle(
                   fontSize: 28,
-                  decoration: todo.isChecked ? TextDecoration.lineThrough : TextDecoration.none,
+                  decoration: todo.done ? TextDecoration.lineThrough : TextDecoration.none,
                   ),
-                todo.chore
+                todo.title
               ),
             ),
-            Padding(
-              
+            Padding(              
               padding: EdgeInsets.only(right: 20),
-              child: IconButton(
-                 
+              child: IconButton(                 
                 icon: Icon(Icons.close),
                 iconSize: 35,
                 onPressed: (){
-                  context.read<MyState>().removeTodo(todo);
+                  context.read<MyState>().deleteTodo(todo);
                 },
                 )
-              //child: Icon(
-              //size: 35, 
-              //Icons.close
-            //)
             )
           ],
         );
   }
-
-
 }
 
 class AddTodo extends StatefulWidget {
@@ -188,7 +152,7 @@ class _AddTodoState extends State<AddTodo> {
             onPressed: () {
               String inputText = _controller.text;
               if(inputText.isNotEmpty){
-                Todo newTodo = Todo(inputText);
+                Todo newTodo = Todo(null, inputText);
                 context.read<MyState>().addTodo(newTodo);
               }
               Navigator.pop(context);
