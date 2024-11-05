@@ -68,3 +68,18 @@ Future<void> deleteTodo(Todo todo) async {
     await http.delete(Uri.parse('$ENDPOINT/todos/$id?key=$apiKey'));
   }
 }
+Future<void> updateTodo(Todo todo, String title, bool done) async {
+  if (apiKey == null) {
+    await getApiKey();
+  }
+  if (apiKey != null && todo.id != null) {
+    String id = todo.id!;
+    todo.title = title;
+    todo.done = done;
+    await http.put(
+      Uri.parse('$ENDPOINT/todos/$id?key=$apiKey'),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode(todo.toJson()),
+      );
+  }
+}

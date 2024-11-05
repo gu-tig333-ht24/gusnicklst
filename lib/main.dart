@@ -23,6 +23,10 @@ void deleteTodo(Todo todo) async {
   await api.deleteTodo(todo);
   fetchTodos();
 }
+void updateTodo(Todo todo, String title, bool done) async {
+  await api.updateTodo(todo, title, done);
+  fetchTodos();
+}
 }
 
 void main() async {
@@ -59,16 +63,48 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  String _filter = 'all';
   @override
   Widget build(BuildContext context) {
     var todos = context.watch<MyState>().todos;
+    var filteredTodos = todos.where((todo) {
+      if (_filter == 'done') {
+        return todo.done;
+      } else if (_filter == 'undone') {
+        return !todo.done;
+      }
+      return true;
+    }).toList();
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.grey,
         title: const Text("To-do list"),
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              setState(() {
+                _filter = value;
+              });
+            },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              const PopupMenuItem<String>(
+                value: 'all',
+                child: Text('all'),
+              ),
+              const PopupMenuItem<String>(
+                value: 'done',
+                child: Text('done'),
+              ),
+              const PopupMenuItem<String>(
+                value: 'undone',
+                child: Text('undone'),
+              ),
+            ]
+          )
+        ],
       ),
       body: ListView(          
-        children: todos.map((todo) => chores(todo)).toList(),
+        children: filteredTodos.map((todo) => chores(todo)).toList(),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: (){
@@ -92,7 +128,8 @@ class _MyHomePageState extends State<MyHomePage> {
               value: todo.done, 
               onChanged: (bool? newValue){
                 setState((){
-                  todo.done = newValue ?? false;
+                  todo.done = newValue ?? false;                  
+                  context.read<MyState>().updateTodo(todo, todo.title, todo.done);
                 });
               } 
             ),
